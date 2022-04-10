@@ -25,7 +25,7 @@ def get_game_initial_state() -> str:
                      " (ENTER) - New Game\n")
 
         if data.lower() == 'c':
-            return input("Insert legal FEN encoded state: ")  # TODO: should check for legality
+            return input("Insert legal FEN encoded state: ")
         elif data == '1':
             return configs.GAME_STATE_EASY_WHITE_WIN
         elif data == '\n':
@@ -84,5 +84,10 @@ class ChessGame:
             return Action(player=self.human_player_color, move=action)
 
 
+# TODO: README
+# TODO: game visualization
+# TODO: collect and display AI move statistics
+# TODO: check for FEN string validity
+# TODO: try trim enough branches to play a full game (OR think about better/faster algorithm)
 if __name__ == "__main__":
     ChessGame(ai_move_time_limit_seconds=10).play()
