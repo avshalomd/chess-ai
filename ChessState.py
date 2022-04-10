@@ -5,10 +5,11 @@ import chess
 from mcts import mcts
 
 import configs
+from enums.EPlayer import EPlayer
 
 
 class Action:
-    def __init__(self, player: int, move: str):
+    def __init__(self, player: EPlayer, move: str):
         self.player = player
         self.move = move
 
@@ -25,10 +26,22 @@ class Action:
         return hash((self.move, self.player))
 
 
-class ChessState():
-    def __init__(self):
-        self.board = chess.Board()
-        self.current_player = 1  # (1) = White, (-1) = Black
+def get_starting_player(starting_fen) -> EPlayer:
+    if (starting_fen is None) or (starting_fen is ''):
+        return EPlayer.WHITE
+    else:
+        if starting_fen.split()[1] == 'w':
+            return EPlayer.WHITE
+        elif starting_fen.split()[1] == 'b':
+            return EPlayer.BLACK
+        else:
+            logging.error(f'Unrecognized starter player: {starting_fen.split()[1]}')
+
+
+class ChessState:
+    def __init__(self, starting_fen: str = None):
+        self.board = chess.Board() if (starting_fen is None) or (starting_fen is '') else chess.Board(fen=starting_fen)
+        self.current_player = get_starting_player(starting_fen=starting_fen)
 
     def getCurrentPlayer(self):
         return self.current_player
@@ -41,28 +54,26 @@ class ChessState():
 
     def takeAction(self, action: Action):
         new_state = deepcopy(self)
+        new_state.current_player = EPlayer(self.current_player.value * -1)
         new_state.board.push_uci(action.move)
-        # print('----------------')
-        # print(new_state.board)
-        new_state.current_player = self.current_player * -1
         return new_state
 
     def isTerminal(self):
-        return self.board.is_checkmate() or self.board.legal_moves.count() == 0
+        return self.board.is_game_over()
 
     def getReward(self):
         if self.board.is_checkmate():
-            logging.debug('got to checkmate state')
+            logging.debug(f'{EPlayer(self.current_player.value * -1).name} player got to checkmate state')
             return configs.HIGH_REWARD
-        if self.board.legal_moves.count() == 0:
-            logging.debug('got to pat state')
+        if self.board.can_claim_draw():
+            logging.debug(f'{EPlayer(self.current_player.value * -1).name} player got to draw state')
             return configs.LOW_REWARD
         return False
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
-    initialState = ChessState()
-    searcher = mcts(timeLimit=1000000)
+    # logging.basicConfig(level=logging.DEBUG)
+    initialState = ChessState(starting_fen='')
+    searcher = mcts(timeLimit=10 * 1000)
     next_action = searcher.search(initialState=initialState)
     print(next_action)
