@@ -27,7 +27,7 @@ class Action:
 
 
 def get_starting_player(starting_fen) -> EPlayer:
-    if (starting_fen is None) or (starting_fen is ''):
+    if (starting_fen is None) or (starting_fen == ''):
         return EPlayer.WHITE
     else:
         if starting_fen.split()[1] == 'w':
@@ -40,7 +40,7 @@ def get_starting_player(starting_fen) -> EPlayer:
 
 class ChessState:
     def __init__(self, starting_fen: str = None):
-        self.board = chess.Board() if (starting_fen is None) or (starting_fen is '') else chess.Board(fen=starting_fen)
+        self.board = chess.Board() if (starting_fen is None) or (starting_fen == '') else chess.Board(fen=starting_fen)
         self.current_player = get_starting_player(starting_fen=starting_fen)
 
     def getCurrentPlayer(self):

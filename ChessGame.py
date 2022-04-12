@@ -1,8 +1,11 @@
+import logging
+
 from mcts import mcts
 
 import configs
 from ChessState import ChessState, Action
 from enums.EPlayer import EPlayer
+from enums.EAIMode import EAIMode
 
 
 def get_player_color() -> EPlayer:
@@ -28,18 +31,18 @@ def get_game_initial_state() -> str:
             return input("Insert legal FEN encoded state: ")
         elif data == '1':
             return configs.GAME_STATE_EASY_WHITE_WIN
-        elif data == '\n':
+        elif data == '':
             return ''
         else:
             raise ValueError('Unsupported game initial state.')
 
 
 class ChessGame:
-    def __init__(self, ai_move_time_limit_seconds: int = 10):
+    def __init__(self, ai_mode: EAIMode = EAIMode.NORMAL):
         self.human_player_color = get_player_color()
         self.game_initial_state = get_game_initial_state()
         self.current_game_state = ChessState(starting_fen=self.game_initial_state)
-        self.ai_move_time_limit_seconds = ai_move_time_limit_seconds
+        self.ai_move_time_limit_seconds = ai_mode.value
 
     def play(self):
         while not self.current_game_state.board.is_game_over():
@@ -88,6 +91,9 @@ class ChessGame:
 # TODO: game visualization
 # TODO: collect and display AI move statistics
 # TODO: check for FEN string validity
-# TODO: try trim enough branches to play a full game (OR think about better/faster algorithm)
+# TODO: experiment with different policies
+# TODO: save MCTS game tree and use previous knowledge (statistics) as the game evolves (instead of reset it every turn)
+# TODO: add progress bar (or any other indicator) for AI thinking time
 if __name__ == "__main__":
-    ChessGame(ai_move_time_limit_seconds=10).play()
+    # logging.basicConfig(level=logging.DEBUG)
+    ChessGame(ai_mode=EAIMode.NORMAL).play()
