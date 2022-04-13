@@ -6,6 +6,7 @@ import configs
 from ChessState import ChessState, Action
 from enums.EPlayer import EPlayer
 from enums.EAIMode import EAIMode
+from utils.validation import is_valid_fen
 
 
 def get_player_color() -> EPlayer:
@@ -28,7 +29,10 @@ def get_game_initial_state() -> str:
                      " (ENTER) - New Game\n")
 
         if data.lower() == 'c':
-            return input("Insert legal FEN encoded state: ")
+            while True:
+                initial_state_string = input("Insert legal FEN encoded state: ")
+                if is_valid_fen(initial_state_string):
+                    return initial_state_string
         elif data == '1':
             return configs.GAME_STATE_EASY_WHITE_WIN
         elif data == '':
@@ -90,10 +94,9 @@ class ChessGame:
 # TODO: README
 # TODO: game visualization
 # TODO: collect and display AI move statistics
-# TODO: check for FEN string validity
 # TODO: experiment with different policies
 # TODO: save MCTS game tree and use previous knowledge (statistics) as the game evolves (instead of reset it every turn)
 # TODO: add progress bar (or any other indicator) for AI thinking time
 if __name__ == "__main__":
-    # logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     ChessGame(ai_mode=EAIMode.NORMAL).play()

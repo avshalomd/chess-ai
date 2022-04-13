@@ -73,7 +73,7 @@ class ChessState:
 
 if __name__ == "__main__":
     # logging.basicConfig(level=logging.DEBUG)
-    initialState = ChessState(starting_fen='')
+    initialState = ChessState()
     searcher = mcts(timeLimit=10 * 1000)
     next_action = searcher.search(initialState=initialState)
     print(next_action)
