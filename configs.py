@@ -1,5 +1,5 @@
 # rewards values
-HIGH_REWARD = 10
+HIGH_REWARD = 100
 LOW_REWARD = 1
 
 # game initializations (FEN encoded)

@@ -1,12 +1,14 @@
-import logging
+import io
+import sys
 
+import chess
 from mcts import mcts
 
 import configs
 from ChessState import ChessState, Action
-from enums.EPlayer import EPlayer
 from enums.EAIMode import EAIMode
-from utils.validation import is_valid_fen
+from enums.EPlayer import EPlayer
+from utils.utils import is_valid_fen
 
 
 def get_player_color() -> EPlayer:
@@ -44,9 +46,11 @@ def get_game_initial_state() -> str:
 class ChessGame:
     def __init__(self, ai_mode: EAIMode = EAIMode.NORMAL):
         self.human_player_color = get_player_color()
+        self.ai_player_color = EPlayer(self.human_player_color.value * -1)  # not human color
         self.game_initial_state = get_game_initial_state()
-        self.current_game_state = ChessState(starting_fen=self.game_initial_state)
+        self.current_game_state = ChessState(starting_fen=self.game_initial_state, ai_player_color=self.ai_player_color)
         self.ai_move_time_limit_seconds = ai_mode.value
+        self.mcts_model = mcts(timeLimit=self.ai_move_time_limit_seconds * 1000)
 
     def play(self):
         while not self.current_game_state.board.is_game_over():
@@ -58,27 +62,33 @@ class ChessGame:
         if self.current_game_state.current_player == self.human_player_color:
             action = self._get_human_action()
         else:
-            print('Please wait while the AI is thinking...\n')
-            action = mcts(timeLimit=self.ai_move_time_limit_seconds * 1000).search(self.current_game_state)
+            print(f'Please wait while the AI is thinking... {self.ai_move_time_limit_seconds}[s]')
+            action = self.mcts_model.search(self.current_game_state)
 
         self.current_game_state = self.current_game_state.takeAction(action)
 
     def _print_board(self):
-        print('---------------')
+        print('------------------')
+        stdout = sys.stdout
+        sys.stdout = io.StringIO()
         print(self.current_game_state.board)
-        print('---------------')
+        output = sys.stdout.getvalue()
+        sys.stdout = stdout
+        for i, line in enumerate(iter(output.splitlines())):
+            print(f'{8 - i}| {line}')
+        print('  ----------------')
+        print('   a b c d e f g h')
 
     def _print_game_state(self):
         print(f"\nIt's {self.current_game_state.current_player.name}'s turn")
         self._print_board()
 
     def _print_game_over_state(self):
-        if self.current_game_state.board.is_checkmate():
+        outcome = self.current_game_state.board.outcome()  # should never be None
+        if outcome.termination == chess.Termination.CHECKMATE:
             print(f'{EPlayer(self.current_game_state.current_player.value * -1).name} has won by checkmate')
-        elif self.current_game_state.board.can_claim_draw():
-            print(f"It's a draw")
         else:
-            print("what just happened?")
+            print(f"It's a draw")
         self._print_board()
 
     def _get_human_action(self) -> Action:
@@ -92,11 +102,8 @@ class ChessGame:
 
 
 # TODO: README
-# TODO: game visualization
 # TODO: collect and display AI move statistics
 # TODO: experiment with different policies
-# TODO: save MCTS game tree and use previous knowledge (statistics) as the game evolves (instead of reset it every turn)
-# TODO: add progress bar (or any other indicator) for AI thinking time
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
+    # logging.basicConfig(level=logging.DEBUG)
     ChessGame(ai_mode=EAIMode.NORMAL).play()
