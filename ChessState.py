@@ -39,8 +39,9 @@ def get_starting_player(starting_fen) -> EPlayer:
 
 
 class ChessState:
-    def __init__(self, starting_fen: str = None):
+    def __init__(self, ai_player_color: EPlayer, starting_fen: str = None):
         self.board = chess.Board() if (starting_fen is None) or (starting_fen == '') else chess.Board(fen=starting_fen)
+        self.ai_player_color = ai_player_color
         self.current_player = get_starting_player(starting_fen=starting_fen)
 
     def getCurrentPlayer(self):
@@ -59,21 +60,24 @@ class ChessState:
         return new_state
 
     def isTerminal(self):
-        return self.board.is_game_over()
+        return self.board.is_game_over(claim_draw=True)
 
     def getReward(self):
-        if self.board.is_checkmate():
+        if self.current_player == self.ai_player_color:
+            return 0
+
+        outcome = self.board.outcome(claim_draw=True)  # should never be None
+        if outcome.termination == chess.Termination.CHECKMATE:
             logging.debug(f'{EPlayer(self.current_player.value * -1).name} player got to checkmate state')
             return configs.HIGH_REWARD
-        if self.board.can_claim_draw():
+        else:
             logging.debug(f'{EPlayer(self.current_player.value * -1).name} player got to draw state')
             return configs.LOW_REWARD
-        return False
 
 
 if __name__ == "__main__":
     # logging.basicConfig(level=logging.DEBUG)
-    initialState = ChessState(starting_fen='')
+    initialState = ChessState()
     searcher = mcts(timeLimit=10 * 1000)
     next_action = searcher.search(initialState=initialState)
     print(next_action)
